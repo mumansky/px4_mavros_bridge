@@ -1,0 +1,14 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: px4_mavros_bridge
+    network_mode: host
+    devices:
+      - /dev/ttyACM0:/dev/ttyACM0
+    volumes:
+      - app_data:/app/data
+
+volumes:
+  app_data:

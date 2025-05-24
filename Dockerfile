@@ -1,0 +1,40 @@
+# This is an auto generated Dockerfile for ros:ros-base
+# generated from docker_images_ros2/create_ros_image.Dockerfile.em
+FROM ros:jazzy-ros-core-noble
+
+# install bootstrap tools
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    build-essential \
+    git \
+    python3-colcon-common-extensions \
+    python3-colcon-mixin \
+    python3-rosdep \
+    python3-vcstool \
+    software-properties-common \
+    && rm -rf /var/lib/apt/lists/*
+
+# bootstrap rosdep
+RUN rosdep init && \
+  rosdep update --rosdistro $ROS_DISTRO
+
+# setup colcon mixin and metadata
+RUN colcon mixin add default \
+      https://raw.githubusercontent.com/colcon/colcon-mixin-repository/master/index.yaml && \
+    colcon mixin update && \
+    colcon metadata add default \
+      https://raw.githubusercontent.com/colcon/colcon-metadata-repository/master/index.yaml && \
+    colcon metadata update
+
+# install ros2 packages
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ros-jazzy-ros-base=0.11.0-1* \
+    ros-jazzy-mavros \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN . /opt/ros/$ROS_DISTRO/setup.sh && ros2 run mavros install_geographiclib_datasets.sh
+
+# Source the workspace and set entrypoint
+SHELL ["/bin/bash", "-c"]
+ENTRYPOINT ["/ros_entrypoint.sh"]
+
+CMD ["ros2", "launch", "mavros", "apm.launch", "fcu_url:=/dev/ttyACM0:57600"]
